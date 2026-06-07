@@ -30,26 +30,27 @@ jobs:
       env:
         ASC_API_KEY_CONTENT: ${{ secrets.ASC_API_KEY_CONTENT }}
       run: |
-        pip3 install --break-system-packages PyJWT > /dev/null 2>&1
-        python3 -c "
-import jwt, time, requests, json
-key = open('/tmp/asc_key.p8' if __import__('os').path.exists('/tmp/asc_key.p8') else '','r').read() if __import__('os').path.exists('/tmp/asc_key.p8') else ''
-if not key:
-    import base64, os
-    key_data = base64.b64decode(os.environ['ASC_API_KEY_CONTENT'])
-    with open('/tmp/asc_key.p8','wb') as f: f.write(key_data)
-    key = key_data.decode()
-token = jwt.encode({'iss':'2be0734f-943a-4d61-9dc9-5d9045c46fec','iat':int(time.time()),'exp':int(time.time())+1200,'aud':'appstoreconnect-v1'}, key, algorithm='ES256', headers={'kid':'WDXGY9WX55'})
-h = {'Authorization': f'Bearer {token}'}
-r = requests.get('https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=DEVELOPMENT', headers=h)
-certs = r.json().get('data',[])
-if len(certs) > 3:
-    certs.sort(key=lambda c: c['attributes']['expirationDate'])
-    for c in certs[:-2]:
-        requests.delete(f'https://api.appstoreconnect.apple.com/v1/certificates/{c[\"id\"]}', headers=h)
-        print(f'Revoked {c[\"id\"]}')
-print(f'{len(certs)} certs found, kept 2')
-" || echo "Cert cleanup skipped"
+        pip3 install --break-system-packages PyJWT requests > /dev/null 2>&1
+        cat > /tmp/cleanup_certs.py << 'PYEOF'
+        import jwt, time, requests, os, base64
+        key_path = '/tmp/asc_key.p8'
+        if not os.path.exists(key_path):
+            key_data = base64.b64decode(os.environ['ASC_API_KEY_CONTENT'])
+            with open(key_path, 'wb') as f:
+                f.write(key_data)
+        key = open(key_path, 'r').read()
+        token = jwt.encode({'iss':'2be0734f-943a-4d61-9dc9-5d9045c46fec','iat':int(time.time()),'exp':int(time.time())+1200,'aud':'appstoreconnect-v1'}, key, algorithm='ES256', headers={'kid':'WDXGY9WX55'})
+        h = {'Authorization': f'Bearer {token}'}
+        r = requests.get('https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=DEVELOPMENT', headers=h)
+        certs = r.json().get('data', [])
+        if len(certs) > 3:
+            certs.sort(key=lambda c: c['attributes']['expirationDate'])
+            for c in certs[:-2]:
+                requests.delete(f"https://api.appstoreconnect.apple.com/v1/certificates/{c['id']}", headers=h)
+                print(f"Revoked {c['id']}")
+        print(f"{len(certs)} certs found")
+        PYEOF
+        python3 /tmp/cleanup_certs.py || echo "Cert cleanup skipped"
 
     - name: Set build number
       run: |
