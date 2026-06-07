@@ -1,0 +1,47 @@
+name: SeisoReport
+options:
+  bundleIdPrefix: com.tokyonasu
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "$(CURRENT_PROJECT_VERSION)"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: 83VGKGSQUH
+
+targets:
+  SeisoReport:
+    type: application
+    platform: iOS
+    sources:
+      - SeisoReport
+    settings:
+      base:
+        PRODUCT_NAME: SeisoReport
+        PRODUCT_BUNDLE_IDENTIFIER: com.tokyonasu.seisoreport
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_FILE: SeisoReport/Resources/Info.plist
+    info:
+      path: SeisoReport/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: "清掃報告書"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSRequiresIPhoneOS: true
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen:
+          UIColorName: ""
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSCameraUsageDescription: "清掃後の写真を撮影するためにカメラを使用します。"
+        NSPhotoLibraryUsageDescription: "清掃報告書に添付する写真を選択するために使用します。"
