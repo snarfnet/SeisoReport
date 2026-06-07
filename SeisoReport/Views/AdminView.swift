@@ -12,8 +12,7 @@ struct AdminView: View {
     @State private var newPropertyAddress = ""
     @State private var newPropertyFloors = 3
     @State private var newWorkerName = ""
-    @State private var showBackupShare = false
-    @State private var backupURL: URL?
+    @State private var backupURL: ShareableURL?
     @State private var showImportPicker = false
     @State private var importMessage: String?
 
@@ -41,10 +40,8 @@ struct AdminView: View {
             .sheet(item: $editingWorker) { worker in
                 WorkerDetailSheet(store: store, worker: worker)
             }
-            .sheet(isPresented: $showBackupShare) {
-                if let url = backupURL {
-                    ShareSheet(items: [url])
-                }
+            .sheet(item: $backupURL) { item in
+                ShareSheet(items: [item.url])
             }
             .fileImporter(isPresented: $showImportPicker, allowedContentTypes: [.json]) { result in
                 switch result {
@@ -281,8 +278,9 @@ struct AdminView: View {
     private var backupSection: some View {
         Section {
             Button {
-                backupURL = store.exportBackup()
-                if backupURL != nil { showBackupShare = true }
+                if let url = store.exportBackup() {
+                    backupURL = ShareableURL(url: url)
+                }
             } label: {
                 Label("バックアップを書き出す", systemImage: "square.and.arrow.up")
             }
