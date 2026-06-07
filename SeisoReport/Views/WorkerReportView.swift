@@ -19,8 +19,7 @@ struct WorkerReportView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("役割変更") {
-                        UserDefaults.standard.removeObject(forKey: "roleSelected")
-                        store.setRole(false)
+                        store.clearRole()
                     }
                 }
             }

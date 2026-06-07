@@ -7,7 +7,7 @@ struct SeisoReportApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if !UserDefaults.standard.bool(forKey: "roleSelected") {
+                if !store.roleSelected {
                     RoleSelectView()
                 } else if store.isAdmin {
                     AdminView()

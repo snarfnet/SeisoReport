@@ -20,7 +20,6 @@ struct RoleSelectView: View {
 
             VStack(spacing: 16) {
                 Button {
-                    UserDefaults.standard.set(true, forKey: "roleSelected")
                     store.setRole(true)
                 } label: {
                     Label("管理者", systemImage: "person.badge.key.fill")
@@ -31,7 +30,6 @@ struct RoleSelectView: View {
                 }
 
                 Button {
-                    UserDefaults.standard.set(true, forKey: "roleSelected")
                     store.setRole(false)
                 } label: {
                     Label("作業員", systemImage: "person.fill")

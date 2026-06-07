@@ -7,9 +7,11 @@ final class DataStore {
     var properties: [Property]
     var workerName: String
     var isAdmin: Bool
+    var roleSelected: Bool
     var reportHistory: [ReportSummary]
 
     init() {
+        roleSelected = UserDefaults.standard.bool(forKey: "roleSelected")
         isAdmin = UserDefaults.standard.bool(forKey: "isAdmin")
         workerName = UserDefaults.standard.string(forKey: "workerName") ?? ""
 
@@ -91,7 +93,14 @@ final class DataStore {
 
     func setRole(_ admin: Bool) {
         isAdmin = admin
+        roleSelected = true
+        UserDefaults.standard.set(true, forKey: "roleSelected")
         save()
+    }
+
+    func clearRole() {
+        roleSelected = false
+        UserDefaults.standard.removeObject(forKey: "roleSelected")
     }
 
     // Export template as JSON string for QR code
