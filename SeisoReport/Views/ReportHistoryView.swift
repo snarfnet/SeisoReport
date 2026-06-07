@@ -49,7 +49,6 @@ struct ReportHistoryView: View {
             .navigationTitle("送信履歴")
             .sheet(item: $shareItem) { item in
                 ShareSheet(items: [item.url])
-                }
             }
         }
     }
