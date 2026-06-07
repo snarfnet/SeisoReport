@@ -29,7 +29,7 @@ targets:
     info:
       path: SeisoReport/Resources/Info.plist
       properties:
-        CFBundleDisplayName: "清掃報告書"
+        CFBundleDisplayName: "マンション清掃作業報告書"
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSRequiresIPhoneOS: true
