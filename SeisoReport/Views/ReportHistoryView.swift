@@ -2,8 +2,7 @@ import SwiftUI
 
 struct ReportHistoryView: View {
     @Environment(DataStore.self) private var store
-    @State private var selectedPDF: URL?
-    @State private var showShare = false
+    @State private var shareItem: ShareableURL?
 
     var body: some View {
         NavigationStack {
@@ -18,8 +17,7 @@ struct ReportHistoryView: View {
                     List {
                         ForEach(store.reportHistory) { report in
                             Button {
-                                selectedPDF = store.pdfURL(for: report)
-                                showShare = true
+                                shareItem = ShareableURL(url: store.pdfURL(for: report))
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(report.propertyName)
@@ -49,9 +47,8 @@ struct ReportHistoryView: View {
                 }
             }
             .navigationTitle("送信履歴")
-            .sheet(isPresented: $showShare) {
-                if let url = selectedPDF {
-                    ShareSheet(items: [url])
+            .sheet(item: $shareItem) { item in
+                ShareSheet(items: [item.url])
                 }
             }
         }

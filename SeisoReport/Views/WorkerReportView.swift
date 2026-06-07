@@ -4,8 +4,7 @@ import PhotosUI
 struct WorkerReportView: View {
     @Environment(DataStore.self) private var store
     @State private var draft = ReportDraft()
-    @State private var showingShare = false
-    @State private var shareURL: URL?
+    @State private var shareItem: ShareableURL?
     @State private var showNamePrompt = false
     @State private var showFormatPicker = false
 
@@ -38,10 +37,8 @@ struct WorkerReportView: View {
                     store.save()
                 }
             }
-            .sheet(isPresented: $showingShare) {
-                if let url = shareURL {
-                    ShareSheet(items: [url])
-                }
+            .sheet(item: $shareItem) { item in
+                ShareSheet(items: [item.url])
             }
             .confirmationDialog("出力形式を選択", isPresented: $showFormatPicker) {
                 Button("PDF") { generateAndShare(format: .pdf) }
@@ -173,8 +170,7 @@ struct WorkerReportView: View {
                 draft: draft,
                 sectionCount: store.template.sections.count
             )
-            shareURL = url
-            showingShare = true
+            shareItem = ShareableURL(url: url)
 
         case .docx:
             guard let data = DocxGenerator.generate(
@@ -187,8 +183,7 @@ struct WorkerReportView: View {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             let url = dir.appendingPathComponent("report_\(timestamp).docx")
             try? data.write(to: url)
-            shareURL = url
-            showingShare = true
+            shareItem = ShareableURL(url: url)
         }
     }
 }
