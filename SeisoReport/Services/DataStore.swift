@@ -18,12 +18,10 @@ final class DataStore {
         roleSelected = UserDefaults.standard.bool(forKey: "roleSelected")
         isAdmin = UserDefaults.standard.bool(forKey: "isAdmin")
         adminPassword = UserDefaults.standard.string(forKey: "adminPassword") ?? "0000"
-        if let code = UserDefaults.standard.string(forKey: "recoveryCode") {
-            recoveryCode = code
-        } else {
-            recoveryCode = String(format: "%06d", Int.random(in: 100000...999999))
-            UserDefaults.standard.set(recoveryCode, forKey: "recoveryCode")
-        }
+        let storedCode = UserDefaults.standard.string(forKey: "recoveryCode")
+        let code = storedCode ?? String(format: "%06d", Int.random(in: 100000...999999))
+        recoveryCode = code
+        if storedCode == nil { UserDefaults.standard.set(code, forKey: "recoveryCode") }
         workerName = UserDefaults.standard.string(forKey: "workerName") ?? ""
 
         if let data = UserDefaults.standard.data(forKey: "template"),
