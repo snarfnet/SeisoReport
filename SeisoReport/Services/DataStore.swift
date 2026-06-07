@@ -15,7 +15,7 @@ final class DataStore {
     var reportHistory: [ReportSummary]
 
     init() {
-        roleSelected = UserDefaults.standard.bool(forKey: "roleSelected")
+        roleSelected = false
         isAdmin = UserDefaults.standard.bool(forKey: "isAdmin")
         adminPassword = UserDefaults.standard.string(forKey: "adminPassword") ?? "0000"
         let storedCode = UserDefaults.standard.string(forKey: "recoveryCode")
