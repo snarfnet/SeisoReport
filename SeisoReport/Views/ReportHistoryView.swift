@@ -50,8 +50,8 @@ struct ReportHistoryView: View {
             }
             .navigationTitle("送信履歴")
             .sheet(isPresented: $showShare) {
-                if let url = selectedPDF, let data = try? Data(contentsOf: url) {
-                    ShareSheet(items: [data])
+                if let url = selectedPDF {
+                    ShareSheet(items: [url])
                 }
             }
         }

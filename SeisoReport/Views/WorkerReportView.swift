@@ -5,7 +5,7 @@ struct WorkerReportView: View {
     @Environment(DataStore.self) private var store
     @State private var draft = ReportDraft()
     @State private var showingShare = false
-    @State private var pdfData: Data?
+    @State private var pdfURL: URL?
     @State private var showNamePrompt = false
 
     var body: some View {
@@ -38,8 +38,8 @@ struct WorkerReportView: View {
                 }
             }
             .sheet(isPresented: $showingShare) {
-                if let data = pdfData {
-                    ShareSheet(items: [data])
+                if let url = pdfURL {
+                    ShareSheet(items: [url])
                 }
             }
         }
@@ -154,15 +154,14 @@ struct WorkerReportView: View {
             draft: draft,
             property: prop
         )
-        pdfData = data
 
-        // Save to history
-        let _ = store.saveReport(
+        // Save to history and get file URL
+        let url = store.saveReport(
             pdfData: data,
             draft: draft,
             sectionCount: store.template.sections.count
         )
-
+        pdfURL = url
         showingShare = true
     }
 }
