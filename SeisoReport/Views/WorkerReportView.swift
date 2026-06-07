@@ -218,10 +218,12 @@ private struct PhotoSection: View {
                 } label: {
                     Label("撮影", systemImage: "camera.fill")
                 }
+                .buttonStyle(.borderless)
 
                 PhotosPicker(selection: $selectedItems, maxSelectionCount: 5, matching: .images) {
                     Label("選択", systemImage: "photo.on.rectangle")
                 }
+                .buttonStyle(.borderless)
                 .onChange(of: selectedItems) { _, items in
                     for item in items {
                         item.loadTransferable(type: Data.self) { result in
