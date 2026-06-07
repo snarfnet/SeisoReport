@@ -26,6 +26,13 @@ struct Property: Identifiable, Codable {
     var floors: Int = 3
 }
 
+// A registered worker managed by admin
+struct Worker: Identifiable, Codable {
+    var id = UUID()
+    var name: String
+    var assignedPropertyIds: [UUID] = []
+}
+
 // The full template
 struct ReportTemplate: Identifiable, Codable {
     var id = UUID()

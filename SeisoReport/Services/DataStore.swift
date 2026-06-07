@@ -8,6 +8,7 @@ final class DataStore {
     var workerName: String
     var isAdmin: Bool
     var roleSelected: Bool
+    var workers: [Worker]
     var reportHistory: [ReportSummary]
 
     init() {
@@ -29,6 +30,13 @@ final class DataStore {
             properties = []
         }
 
+        if let data = UserDefaults.standard.data(forKey: "workers"),
+           let w = try? JSONDecoder().decode([Worker].self, from: data) {
+            workers = w
+        } else {
+            workers = []
+        }
+
         if let data = UserDefaults.standard.data(forKey: "reportHistory"),
            let h = try? JSONDecoder().decode([ReportSummary].self, from: data) {
             reportHistory = h
@@ -45,6 +53,9 @@ final class DataStore {
         }
         if let data = try? JSONEncoder().encode(properties) {
             UserDefaults.standard.set(data, forKey: "properties")
+        }
+        if let data = try? JSONEncoder().encode(workers) {
+            UserDefaults.standard.set(data, forKey: "workers")
         }
         if let data = try? JSONEncoder().encode(reportHistory) {
             UserDefaults.standard.set(data, forKey: "reportHistory")
@@ -109,11 +120,22 @@ final class DataStore {
         return data.base64EncodedString()
     }
 
-    // Import template from QR code base64 string
-    func importTemplate(from base64: String) -> Bool {
-        guard let data = Data(base64Encoded: base64),
-              let t = try? JSONDecoder().decode(ReportTemplate.self, from: data) else { return false }
-        template = t
+    // Import from QR code base64 string (worker name + template + assigned properties)
+    func importFromQR(_ base64: String) -> Bool {
+        guard let data = Data(base64Encoded: base64) else { return false }
+
+        struct SyncData: Codable {
+            let workerName: String?
+            let template: ReportTemplate
+            let properties: [Property]
+        }
+
+        guard let sync = try? JSONDecoder().decode(SyncData.self, from: data) else { return false }
+        template = sync.template
+        properties = sync.properties
+        if let name = sync.workerName, !name.isEmpty {
+            workerName = name
+        }
         save()
         return true
     }
