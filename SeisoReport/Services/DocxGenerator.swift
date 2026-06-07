@@ -83,12 +83,12 @@ struct DocxGenerator {
             case .checklist:
                 let checks = draft.checks[section.id] ?? []
                 body += "<w:tbl>"
-                body += tableProperties()
+                body += tableProperties(col1: 7800, col2: 1226)
                 for (i, item) in section.checklistItems.enumerated() {
                     let checked = i < checks.count && checks[i]
                     let mark = checked ? "☑" : "☐"
                     let status = checked ? "済" : "未"
-                    body += tableRow("\(mark) \(item)", status)
+                    body += tableRow("\(mark) \(item)", status, col1: 7800, col2: 1226)
                 }
                 body += "</w:tbl>"
 
@@ -133,10 +133,12 @@ struct DocxGenerator {
         return "<w:p>\(ppr)<w:r>\(rpr)<w:t xml:space=\"preserve\">\(escaped)</w:t></w:r></w:p>"
     }
 
-    private static func tableProperties() -> String {
-        """
+    private static func tableProperties(col1: Int = 2500, col2: Int = 6526) -> String {
+        let total = col1 + col2
+        return """
         <w:tblPr>
-        <w:tblW w:w="5000" w:type="pct"/>
+        <w:tblW w:w="\(total)" w:type="dxa"/>
+        <w:tblLayout w:type="fixed"/>
         <w:tblBorders>
         <w:top w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
         <w:left w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
@@ -146,12 +148,13 @@ struct DocxGenerator {
         <w:insideV w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
         </w:tblBorders>
         </w:tblPr>
+        <w:tblGrid><w:gridCol w:w="\(col1)"/><w:gridCol w:w="\(col2)"/></w:tblGrid>
         """
     }
 
-    private static func tableRow(_ label: String, _ value: String) -> String {
-        let cell1 = "<w:tc><w:tcPr><w:tcW w:w=\"2000\" w:type=\"pct\"/><w:shd w:val=\"clear\" w:fill=\"F0F0F0\"/></w:tcPr><w:p><w:r><w:rPr><w:b/><w:sz w:val=\"20\"/></w:rPr><w:t xml:space=\"preserve\">\(label.xmlEscaped)</w:t></w:r></w:p></w:tc>"
-        let cell2 = "<w:tc><w:tcPr><w:tcW w:w=\"3000\" w:type=\"pct\"/></w:tcPr><w:p><w:r><w:rPr><w:sz w:val=\"20\"/></w:rPr><w:t xml:space=\"preserve\">\(value.xmlEscaped)</w:t></w:r></w:p></w:tc>"
+    private static func tableRow(_ label: String, _ value: String, col1: Int = 2500, col2: Int = 6526) -> String {
+        let cell1 = "<w:tc><w:tcPr><w:tcW w:w=\"\(col1)\" w:type=\"dxa\"/><w:shd w:val=\"clear\" w:fill=\"F0F0F0\"/></w:tcPr><w:p><w:r><w:rPr><w:b/><w:sz w:val=\"20\"/></w:rPr><w:t xml:space=\"preserve\">\(label.xmlEscaped)</w:t></w:r></w:p></w:tc>"
+        let cell2 = "<w:tc><w:tcPr><w:tcW w:w=\"\(col2)\" w:type=\"dxa\"/></w:tcPr><w:p><w:r><w:rPr><w:sz w:val=\"20\"/></w:rPr><w:t xml:space=\"preserve\">\(value.xmlEscaped)</w:t></w:r></w:p></w:tc>"
         return "<w:tr>\(cell1)\(cell2)</w:tr>"
     }
 
