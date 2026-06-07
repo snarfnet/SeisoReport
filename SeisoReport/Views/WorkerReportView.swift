@@ -16,13 +16,6 @@ struct WorkerReportView: View {
                 submitSection
             }
             .navigationTitle("作業報告")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("役割変更") {
-                        store.clearRole()
-                    }
-                }
-            }
             .onAppear {
                 draft.workerName = store.workerName
                 if store.workerName.isEmpty { showNamePrompt = true }
