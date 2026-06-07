@@ -17,6 +17,9 @@ struct AdminView: View {
     @State private var importMessage: String?
     @State private var showSaveTemplate = false
     @State private var saveTemplateName = ""
+    @State private var showPinChange = false
+    @State private var newPin = ""
+    @State private var pinChangeMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -81,6 +84,30 @@ struct AdminView: View {
                 Button("OK") { importMessage = nil }
             } message: {
                 if let msg = importMessage { Text(msg) }
+            }
+            .alert("管理者PIN変更", isPresented: $showPinChange) {
+                SecureField("新しいPIN（4桁以上）", text: $newPin)
+                    .keyboardType(.numberPad)
+                Button("変更") {
+                    if newPin.count >= 4 {
+                        store.adminPin = newPin
+                        store.save()
+                        pinChangeMessage = "PINを変更しました"
+                    } else {
+                        pinChangeMessage = "PINは4桁以上で入力してください"
+                    }
+                }
+                Button("キャンセル", role: .cancel) {}
+            } message: {
+                Text("新しいPINを入力してください（現在: \(store.adminPin)）")
+            }
+            .alert("PIN変更", isPresented: .init(
+                get: { pinChangeMessage != nil },
+                set: { if !$0 { pinChangeMessage = nil } }
+            )) {
+                Button("OK") { pinChangeMessage = nil }
+            } message: {
+                if let msg = pinChangeMessage { Text(msg) }
             }
         }
     }
@@ -350,6 +377,13 @@ struct AdminView: View {
                 showImportPicker = true
             } label: {
                 Label("バックアップから復元", systemImage: "square.and.arrow.down")
+            }
+
+            Button {
+                newPin = ""
+                showPinChange = true
+            } label: {
+                Label("管理者PINを変更", systemImage: "lock.rotation")
             }
         } header: {
             Text("データ管理")

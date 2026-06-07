@@ -2,6 +2,9 @@ import SwiftUI
 
 struct RoleSelectView: View {
     @Environment(DataStore.self) private var store
+    @State private var showPinPrompt = false
+    @State private var pinInput = ""
+    @State private var pinError = false
 
     var body: some View {
         VStack(spacing: 32) {
@@ -20,7 +23,9 @@ struct RoleSelectView: View {
 
             VStack(spacing: 16) {
                 Button {
-                    store.setRole(true)
+                    pinInput = ""
+                    pinError = false
+                    showPinPrompt = true
                 } label: {
                     Label("管理者", systemImage: "person.badge.key.fill")
                         .font(.headline)
@@ -42,6 +47,23 @@ struct RoleSelectView: View {
             .padding(.horizontal, 40)
 
             Spacer()
+        }
+        .alert("管理者PIN", isPresented: $showPinPrompt) {
+            SecureField("PINを入力", text: $pinInput)
+                .keyboardType(.numberPad)
+            Button("ログイン") {
+                if pinInput == store.adminPin {
+                    store.setRole(true)
+                } else {
+                    pinError = true
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("管理者PINを入力してください")
+        }
+        .alert("PINが違います", isPresented: $pinError) {
+            Button("OK") {}
         }
     }
 }
