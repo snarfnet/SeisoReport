@@ -5,8 +5,9 @@ struct WorkerReportView: View {
     @Environment(DataStore.self) private var store
     @State private var draft = ReportDraft()
     @State private var showingShare = false
-    @State private var pdfURL: URL?
+    @State private var shareURL: URL?
     @State private var showNamePrompt = false
+    @State private var showFormatPicker = false
 
     var body: some View {
         NavigationStack {
@@ -38,9 +39,14 @@ struct WorkerReportView: View {
                 }
             }
             .sheet(isPresented: $showingShare) {
-                if let url = pdfURL {
+                if let url = shareURL {
                     ShareSheet(items: [url])
                 }
+            }
+            .confirmationDialog("出力形式を選択", isPresented: $showFormatPicker) {
+                Button("PDF") { generateAndShare(format: .pdf) }
+                Button("Word (.docx)") { generateAndShare(format: .docx) }
+                Button("キャンセル", role: .cancel) {}
             }
         }
     }
@@ -132,7 +138,7 @@ struct WorkerReportView: View {
     private var submitSection: some View {
         Section {
             Button {
-                generateAndShare()
+                showFormatPicker = true
             } label: {
                 Label("報告書を送信", systemImage: "paperplane.fill")
                     .font(.headline)
@@ -145,24 +151,45 @@ struct WorkerReportView: View {
         }
     }
 
-    private func generateAndShare() {
+    enum ExportFormat { case pdf, docx }
+
+    private func generateAndShare(format: ExportFormat) {
         let prop = store.properties.first(where: { $0.id == draft.propertyId })
             ?? Property(name: draft.propertyName, address: "", floors: 3)
 
-        let data = PDFGenerator.generate(
-            template: store.template,
-            draft: draft,
-            property: prop
-        )
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+        let timestamp = dateFormatter.string(from: Date())
 
-        // Save to history and get file URL
-        let url = store.saveReport(
-            pdfData: data,
-            draft: draft,
-            sectionCount: store.template.sections.count
-        )
-        pdfURL = url
-        showingShare = true
+        switch format {
+        case .pdf:
+            let data = PDFGenerator.generate(
+                template: store.template,
+                draft: draft,
+                property: prop
+            )
+            let url = store.saveReport(
+                pdfData: data,
+                draft: draft,
+                sectionCount: store.template.sections.count
+            )
+            shareURL = url
+            showingShare = true
+
+        case .docx:
+            guard let data = DocxGenerator.generate(
+                template: store.template,
+                draft: draft,
+                property: prop
+            ) else { return }
+            let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let dir = docs.appendingPathComponent("Reports", isDirectory: true)
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            let url = dir.appendingPathComponent("report_\(timestamp).docx")
+            try? data.write(to: url)
+            shareURL = url
+            showingShare = true
+        }
     }
 }
 
