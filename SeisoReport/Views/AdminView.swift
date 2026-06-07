@@ -17,9 +17,9 @@ struct AdminView: View {
     @State private var importMessage: String?
     @State private var showSaveTemplate = false
     @State private var saveTemplateName = ""
-    @State private var showPinChange = false
-    @State private var newPin = ""
-    @State private var pinChangeMessage: String?
+    @State private var showPasswordChange = false
+    @State private var newPassword = ""
+    @State private var showRecoveryCode = false
 
     var body: some View {
         NavigationStack {
@@ -85,29 +85,24 @@ struct AdminView: View {
             } message: {
                 if let msg = importMessage { Text(msg) }
             }
-            .alert("管理者PIN変更", isPresented: $showPinChange) {
-                SecureField("新しいPIN（4桁以上）", text: $newPin)
-                    .keyboardType(.numberPad)
+            .alert("パスワード変更", isPresented: $showPasswordChange) {
+                SecureField("新しいパスワード（4文字以上）", text: $newPassword)
                 Button("変更") {
-                    if newPin.count >= 4 {
-                        store.adminPin = newPin
+                    if newPassword.count >= 4 {
+                        store.adminPassword = newPassword
+                        store.recoveryCode = String(format: "%06d", Int.random(in: 100000...999999))
                         store.save()
-                        pinChangeMessage = "PINを変更しました"
-                    } else {
-                        pinChangeMessage = "PINは4桁以上で入力してください"
+                        showRecoveryCode = true
                     }
                 }
                 Button("キャンセル", role: .cancel) {}
             } message: {
-                Text("新しいPINを入力してください（現在: \(store.adminPin)）")
+                Text("新しいパスワードを入力してください")
             }
-            .alert("PIN変更", isPresented: .init(
-                get: { pinChangeMessage != nil },
-                set: { if !$0 { pinChangeMessage = nil } }
-            )) {
-                Button("OK") { pinChangeMessage = nil }
+            .alert("リカバリーコード", isPresented: $showRecoveryCode) {
+                Button("控えました") {}
             } message: {
-                if let msg = pinChangeMessage { Text(msg) }
+                Text("リカバリーコード: \(store.recoveryCode)\n\nこのコードはパスワードを忘れた場合の唯一の復旧手段です。\n\n紙に書いて安全な場所に保管するか、信頼できる人に共有してください。\n\nこのコードを紛失するとパスワードのリセットができなくなります。")
             }
         }
     }
@@ -380,10 +375,16 @@ struct AdminView: View {
             }
 
             Button {
-                newPin = ""
-                showPinChange = true
+                newPassword = ""
+                showPasswordChange = true
             } label: {
-                Label("管理者PINを変更", systemImage: "lock.rotation")
+                Label("パスワードを変更", systemImage: "lock.rotation")
+            }
+
+            Button {
+                showRecoveryCode = true
+            } label: {
+                Label("リカバリーコードを確認", systemImage: "key.fill")
             }
         } header: {
             Text("データ管理")

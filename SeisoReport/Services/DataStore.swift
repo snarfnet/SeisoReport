@@ -9,14 +9,21 @@ final class DataStore {
     var workerName: String
     var isAdmin: Bool
     var roleSelected: Bool
-    var adminPin: String
+    var adminPassword: String
+    var recoveryCode: String
     var workers: [Worker]
     var reportHistory: [ReportSummary]
 
     init() {
         roleSelected = UserDefaults.standard.bool(forKey: "roleSelected")
         isAdmin = UserDefaults.standard.bool(forKey: "isAdmin")
-        adminPin = UserDefaults.standard.string(forKey: "adminPin") ?? "0000"
+        adminPassword = UserDefaults.standard.string(forKey: "adminPassword") ?? "0000"
+        if let code = UserDefaults.standard.string(forKey: "recoveryCode") {
+            recoveryCode = code
+        } else {
+            recoveryCode = String(format: "%06d", Int.random(in: 100000...999999))
+            UserDefaults.standard.set(recoveryCode, forKey: "recoveryCode")
+        }
         workerName = UserDefaults.standard.string(forKey: "workerName") ?? ""
 
         if let data = UserDefaults.standard.data(forKey: "template"),
@@ -58,7 +65,8 @@ final class DataStore {
     func save() {
         UserDefaults.standard.set(isAdmin, forKey: "isAdmin")
         UserDefaults.standard.set(workerName, forKey: "workerName")
-        UserDefaults.standard.set(adminPin, forKey: "adminPin")
+        UserDefaults.standard.set(adminPassword, forKey: "adminPassword")
+        UserDefaults.standard.set(recoveryCode, forKey: "recoveryCode")
         if let data = try? JSONEncoder().encode(template) {
             UserDefaults.standard.set(data, forKey: "template")
         }
