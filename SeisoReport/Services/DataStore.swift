@@ -114,10 +114,47 @@ final class DataStore {
         UserDefaults.standard.removeObject(forKey: "roleSelected")
     }
 
-    // Export template as JSON string for QR code
-    func exportTemplateJSON() -> String? {
-        guard let data = try? JSONEncoder().encode(template) else { return nil }
-        return data.base64EncodedString()
+    // MARK: - Backup & Restore
+
+    struct BackupData: Codable {
+        let template: ReportTemplate
+        let properties: [Property]
+        let workers: [Worker]
+        let exportDate: Date
+    }
+
+    func exportBackup() -> URL? {
+        let backup = BackupData(
+            template: template,
+            properties: properties,
+            workers: workers,
+            exportDate: Date()
+        )
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(backup) else { return nil }
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+        let fileName = "seiso_backup_\(dateFormatter.string(from: Date())).json"
+
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let url = docs.appendingPathComponent(fileName)
+        try? data.write(to: url)
+        return url
+    }
+
+    func importBackup(from url: URL) -> Bool {
+        guard let data = try? Data(contentsOf: url) else { return false }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        guard let backup = try? decoder.decode(BackupData.self, from: data) else { return false }
+        template = backup.template
+        properties = backup.properties
+        workers = backup.workers
+        save()
+        return true
     }
 
     // Import from QR code base64 string (worker name + template + assigned properties)

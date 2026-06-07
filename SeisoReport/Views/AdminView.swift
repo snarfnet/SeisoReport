@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreImage.CIFilterBuiltins
+import UniformTypeIdentifiers
 
 struct AdminView: View {
     @Environment(DataStore.self) private var store
@@ -11,6 +12,10 @@ struct AdminView: View {
     @State private var newPropertyAddress = ""
     @State private var newPropertyFloors = 3
     @State private var newWorkerName = ""
+    @State private var showBackupShare = false
+    @State private var backupURL: URL?
+    @State private var showImportPicker = false
+    @State private var importMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -18,6 +23,7 @@ struct AdminView: View {
                 propertiesSection
                 workersSection
                 templateSection
+                backupSection
             }
             .navigationTitle("管理者設定")
             .toolbar {
@@ -34,6 +40,34 @@ struct AdminView: View {
             }
             .sheet(item: $editingWorker) { worker in
                 WorkerDetailSheet(store: store, worker: worker)
+            }
+            .sheet(isPresented: $showBackupShare) {
+                if let url = backupURL {
+                    ShareSheet(items: [url])
+                }
+            }
+            .fileImporter(isPresented: $showImportPicker, allowedContentTypes: [.json]) { result in
+                switch result {
+                case .success(let url):
+                    if url.startAccessingSecurityScopedResource() {
+                        defer { url.stopAccessingSecurityScopedResource() }
+                        if store.importBackup(from: url) {
+                            importMessage = "バックアップを復元しました\n物件: \(store.properties.count)件\n作業員: \(store.workers.count)名"
+                        } else {
+                            importMessage = "バックアップファイルを読み込めませんでした"
+                        }
+                    }
+                case .failure:
+                    importMessage = "ファイルを開けませんでした"
+                }
+            }
+            .alert("復元", isPresented: .init(
+                get: { importMessage != nil },
+                set: { if !$0 { importMessage = nil } }
+            )) {
+                Button("OK") { importMessage = nil }
+            } message: {
+                if let msg = importMessage { Text(msg) }
             }
         }
     }
@@ -240,6 +274,29 @@ struct AdminView: View {
             }
         }
         .presentationDetents([.medium])
+    }
+
+    // MARK: - Backup
+
+    private var backupSection: some View {
+        Section {
+            Button {
+                backupURL = store.exportBackup()
+                if backupURL != nil { showBackupShare = true }
+            } label: {
+                Label("バックアップを書き出す", systemImage: "square.and.arrow.up")
+            }
+
+            Button {
+                showImportPicker = true
+            } label: {
+                Label("バックアップから復元", systemImage: "square.and.arrow.down")
+            }
+        } header: {
+            Text("データ管理")
+        } footer: {
+            Text("テンプレート・物件・作業員データをJSONファイルで保存・復元できます。")
+        }
     }
 
     private func iconFor(_ type: TemplateSection.SectionType) -> String {
