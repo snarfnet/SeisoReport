@@ -4,6 +4,7 @@ import UIKit
 @Observable
 final class DataStore {
     var template: ReportTemplate
+    var savedTemplates: [ReportTemplate]
     var properties: [Property]
     var workerName: String
     var isAdmin: Bool
@@ -21,6 +22,13 @@ final class DataStore {
             template = t
         } else {
             template = ReportTemplate()
+        }
+
+        if let data = UserDefaults.standard.data(forKey: "savedTemplates"),
+           let st = try? JSONDecoder().decode([ReportTemplate].self, from: data) {
+            savedTemplates = st
+        } else {
+            savedTemplates = []
         }
 
         if let data = UserDefaults.standard.data(forKey: "properties"),
@@ -53,6 +61,9 @@ final class DataStore {
         }
         if let data = try? JSONEncoder().encode(properties) {
             UserDefaults.standard.set(data, forKey: "properties")
+        }
+        if let data = try? JSONEncoder().encode(savedTemplates) {
+            UserDefaults.standard.set(data, forKey: "savedTemplates")
         }
         if let data = try? JSONEncoder().encode(workers) {
             UserDefaults.standard.set(data, forKey: "workers")
@@ -118,6 +129,7 @@ final class DataStore {
 
     struct BackupData: Codable {
         let template: ReportTemplate
+        let savedTemplates: [ReportTemplate]
         let properties: [Property]
         let workers: [Worker]
         let exportDate: Date
@@ -126,6 +138,7 @@ final class DataStore {
     func exportBackup() -> URL? {
         let backup = BackupData(
             template: template,
+            savedTemplates: savedTemplates,
             properties: properties,
             workers: workers,
             exportDate: Date()
@@ -151,6 +164,7 @@ final class DataStore {
         decoder.dateDecodingStrategy = .iso8601
         guard let backup = try? decoder.decode(BackupData.self, from: data) else { return false }
         template = backup.template
+        savedTemplates = backup.savedTemplates
         properties = backup.properties
         workers = backup.workers
         save()

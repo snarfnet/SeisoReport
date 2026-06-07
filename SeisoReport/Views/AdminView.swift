@@ -15,12 +15,15 @@ struct AdminView: View {
     @State private var backupURL: ShareableURL?
     @State private var showImportPicker = false
     @State private var importMessage: String?
+    @State private var showSaveTemplate = false
+    @State private var saveTemplateName = ""
 
     var body: some View {
         NavigationStack {
             List {
                 propertiesSection
                 workersSection
+                savedTemplatesSection
                 templateSection
                 backupSection
             }
@@ -57,6 +60,19 @@ struct AdminView: View {
                 case .failure:
                     importMessage = "ファイルを開けませんでした"
                 }
+            }
+            .alert("テンプレートを保存", isPresented: $showSaveTemplate) {
+                TextField("テンプレート名", text: $saveTemplateName)
+                Button("保存") {
+                    var tmpl = store.template
+                    tmpl.id = UUID()
+                    tmpl.name = saveTemplateName
+                    store.savedTemplates.append(tmpl)
+                    store.save()
+                }
+                Button("キャンセル", role: .cancel) {}
+            } message: {
+                Text("現在のテンプレートに名前を付けて保存します。")
             }
             .alert("復元", isPresented: .init(
                 get: { importMessage != nil },
@@ -146,6 +162,51 @@ struct AdminView: View {
             Text("作業員")
         } footer: {
             Text("作業員を選ぶと担当物件の設定とQRコード生成ができます。")
+        }
+    }
+
+    // MARK: - Saved Templates
+
+    private var savedTemplatesSection: some View {
+        Section {
+            if !store.savedTemplates.isEmpty {
+                ForEach(store.savedTemplates) { tmpl in
+                    Button {
+                        store.template = tmpl
+                        store.save()
+                    } label: {
+                        HStack {
+                            Image(systemName: "doc.text")
+                                .foregroundStyle(.blue)
+                            Text(tmpl.name)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if tmpl.id == store.template.id {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(.blue)
+                            }
+                            Text("\(tmpl.sections.count)項目")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .onDelete { offsets in
+                    store.savedTemplates.remove(atOffsets: offsets)
+                    store.save()
+                }
+            }
+
+            Button {
+                saveTemplateName = store.template.name
+                showSaveTemplate = true
+            } label: {
+                Label("現在のテンプレートを保存", systemImage: "square.and.arrow.down")
+            }
+        } header: {
+            Text("保存済みテンプレート")
+        } footer: {
+            Text("テンプレートを保存して切り替えられます。タップで読み込み。")
         }
     }
 
